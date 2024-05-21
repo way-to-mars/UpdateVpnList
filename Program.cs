@@ -37,6 +37,8 @@ namespace UpdateVpnList
                     fileSaver.WriteFile(id, data);
                 }
             }
+
+            FinalCountDown(10);
         }
 
         static string getId(string url)
@@ -55,6 +57,25 @@ namespace UpdateVpnList
 
             long time = DateTime.Now.ToBinary();
             return $"noID[{time}]";
+        }
+
+        static void FinalCountDown(int seconds = 5) {
+            string measure = "секунд";
+            switch (seconds % 10) {
+                case 1: measure = "секунду"; break;
+                case 2:
+                case 3:
+                case 4: measure = "секунды"; break;
+            }
+
+            Console.Write($"Окно автоматически закроется через {seconds} {measure}");
+
+            while (seconds > 0) { 
+                Console.Write('.');
+                Task.Delay(1000).Wait();
+                seconds--;
+            }
+        
         }
     }
 }
