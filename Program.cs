@@ -6,12 +6,12 @@ namespace UpdateVpnList
     {
         private static readonly string listUrl = "https://vpnobratno.info/russia.html";
 
-        static void Main(string[] args)
+        static void Main(string[] _)
         {
             Log("Проверка доступа к интернету...");
             Web web = new();
 
-            int internetQuality = (int)(web.CheckInternetConnection() * 100);
+            int internetQuality = web.CheckInternetConnection();
             Log($"Доступность соединения: {internetQuality}%");
 
             string listUrlData = web.LoadUrlAsString(listUrl, out string notification);
@@ -20,11 +20,10 @@ namespace UpdateVpnList
                 return;
             }
 
-            var list = Parser.ServersList(listUrlData);
+            var serversList = Parser.ServersList(listUrlData).AsParallel<string>();
 
-            foreach ( var server in list )
+            serversList.ForAll(server =>
             {
-                var id = getId(server);
                 var data = web.LoadUrlAsString(server, out notification);
 
                 if (data.Length == 0)
@@ -33,49 +32,37 @@ namespace UpdateVpnList
                 }
                 else
                 {
-                    Log(server);
-                    fileSaver.WriteFile(id, data);
+                    string fileName = fileSaver.WriteFile(data, out var exMessage);
+                    if (fileName == string.Empty)
+                    {
+                        Log($"{server}\nОшибка записи файла: {exMessage}");
+                    }
+                    else
+                    {
+                        Log($"{server}\nСохранено в файл: {fileName}");
+                    }
                 }
-            }
+            });
 
+            web.Dispose();
             FinalCountDown(10);
         }
 
-        static string getId(string url)
-        {
-            const string header = "download_id=";
-            var index = url.IndexOf(header);
-
-            if ( index >= 0 )
-            {
-                try
-                {
-                    return url.Substring(index + header.Length);
-                }
-                catch { /* Do nothing */ }
-            }
-
-            long time = DateTime.Now.ToBinary();
-            return $"noID[{time}]";
-        }
-
         static void FinalCountDown(int seconds = 5) {
-            string measure = "секунд";
-            switch (seconds % 10) {
-                case 1: measure = "секунду"; break;
-                case 2:
-                case 3:
-                case 4: measure = "секунды"; break;
-            }
+            string measure = (seconds % 10) switch
+                            {
+                                1 => "секунду",
+                                2 or 3 or 4 => "секунды",
+                                _ => "секунд",
+                            };
 
             Console.Write($"Окно автоматически закроется через {seconds} {measure}");
-
             while (seconds > 0) { 
                 Console.Write('.');
-                Task.Delay(1000).Wait();
+                Task.Delay(999).Wait();
                 seconds--;
             }
-        
+            Console.WriteLine();        
         }
     }
 }

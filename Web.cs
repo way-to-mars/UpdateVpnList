@@ -1,8 +1,6 @@
-﻿using static UpdateVpnList.Logger;
-
-namespace UpdateVpnList
+﻿namespace UpdateVpnList
 {
-    internal class Web
+    internal class Web : IDisposable
     {
         private HttpClient client = new() { Timeout = TimeSpan.FromSeconds(20) };
 
@@ -28,12 +26,16 @@ namespace UpdateVpnList
             }            
         }
 
-        public double CheckInternetConnection() {
+        /// <summary>
+        /// Checks a list of sites for availability
+        /// </summary>
+        /// <returns>The percentage of available sites </returns>
+        public int CheckInternetConnection() {
             var tasks = CheckList.Select(CheckUrl);
 
             var results = Task.WhenAll(tasks).Result;
 
-            return (double)(results.Where(x => x).Count()) / results.Length;
+            return (100 * results.Where(x => x).Count()) / results.Length;
         }
 
         public string LoadUrlAsString(string url, out string notification) {
@@ -49,6 +51,11 @@ namespace UpdateVpnList
             }
             notification = error;
             return content;
+        }
+
+        public void Dispose()
+        {
+            client.Dispose();
         }
     }
 }

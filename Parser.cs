@@ -1,6 +1,4 @@
-﻿using static UpdateVpnList.Logger;
-
-namespace UpdateVpnList
+﻿namespace UpdateVpnList
 {
     internal class Parser
     {
