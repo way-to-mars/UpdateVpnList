@@ -5,7 +5,7 @@
         private static readonly string blockHeader = "<div class=\"server\"><p>";
         private static readonly string hrefHeader = "href=\"";
 
-        public static IReadOnlyList<string> ServersList(string data) {
+        public static IReadOnlyList<string> ServersListFirstInGroup(string data) {
             var resultList = new List<string>();
 
             var index = 0;
@@ -24,11 +24,35 @@
                 var secondQuoteIndex = data.IndexOf('\"', index);
                 if (secondQuoteIndex == -1) break;
 
-                string url = data.Substring(index, secondQuoteIndex - index);
+                string url = data[index..secondQuoteIndex];
                 resultList.Add(url);
             }
 
-            return resultList as IReadOnlyList<string>;
+            return resultList;
+        }
+
+        public static IReadOnlyList<string> AllServersList(string data)
+        {
+            var resultList = new List<string>();
+
+            var index = 0;
+
+            while (true)
+            {
+                var hrefIndex = data.IndexOf(hrefHeader, index);
+                if (hrefIndex == -1) break;
+
+                index = hrefIndex + hrefHeader.Length;
+                var secondQuoteIndex = data.IndexOf('\"', index);
+                if (secondQuoteIndex == -1) break;
+
+                string url = data[index..secondQuoteIndex];
+
+                if (url.Contains("download_id"))
+                    resultList.Add(url);
+            }
+
+            return resultList;
         }
     }
 }

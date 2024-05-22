@@ -20,9 +20,9 @@ namespace UpdateVpnList
                 return;
             }
 
-            var serversList = Parser.ServersList(listUrlData).AsParallel<string>();
+            IReadOnlyList<string> serversList = Parser.AllServersList(listUrlData);
 
-            serversList.ForAll(server =>
+            serversList.AsParallel<string>().ForAll(server =>
             {
                 var data = web.LoadUrlAsString(server, out notification);
 
@@ -32,14 +32,14 @@ namespace UpdateVpnList
                 }
                 else
                 {
-                    string fileName = fileSaver.WriteFile(data, out var exMessage);
+                    string fileName = FileSaver.WriteFileIfUDP(data, out var errorMessage);
                     if (fileName == string.Empty)
                     {
-                        Log($"{server}\nОшибка записи файла: {exMessage}");
+                        Log($"{server} -> Ошибка: {errorMessage}");
                     }
                     else
                     {
-                        Log($"{server}\nСохранено в файл: {fileName}");
+                        Log($"{server} -> Ok: {fileName}");
                     }
                 }
             });

@@ -2,7 +2,7 @@
 {
     internal class Web : IDisposable
     {
-        private HttpClient client = new() { Timeout = TimeSpan.FromSeconds(20) };
+        private readonly HttpClient client = new() { Timeout = TimeSpan.FromSeconds(20) };
 
         private readonly List<string> CheckList = [
                                                     "https://ya.ru",

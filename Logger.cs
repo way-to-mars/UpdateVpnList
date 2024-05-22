@@ -1,5 +1,4 @@
-﻿
-namespace UpdateVpnList
+﻿namespace UpdateVpnList
 {
     internal class Logger
     {
