@@ -8,11 +8,11 @@ namespace UpdateVpnList
 
         static void Main(string[] _)
         {
-            Log("Проверка доступа к интернету...");
+            //Log("Проверка доступа к интернету...");
             Web web = new();
 
-            int internetQuality = web.CheckInternetConnection();
-            Log($"Доступность соединения: {internetQuality}%");
+          /*  int internetQuality = web.CheckInternetConnection();
+            Log($"Доступность соединения: {internetQuality}%");*/
 
             string listUrlData = web.LoadUrlAsString(listUrl, out string notification);
             if (listUrlData.Length == 0) {
