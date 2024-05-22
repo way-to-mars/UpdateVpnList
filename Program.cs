@@ -8,17 +8,16 @@ namespace UpdateVpnList
 
         static void Main(string[] _)
         {
-            //Log("Проверка доступа к интернету...");
+            Log($"Подключение к {listUrl}");
             Web web = new();
-
-          /*  int internetQuality = web.CheckInternetConnection();
-            Log($"Доступность соединения: {internetQuality}%");*/
 
             string listUrlData = web.LoadUrlAsString(listUrl, out string notification);
             if (listUrlData.Length == 0) {
                 Log($"Не удалось загрузить страницу {listUrl}. Текст ошибки:\n{notification}");
                 return;
             }
+
+            Log($"Прочитано {listUrlData.Length} байт");
 
             IReadOnlyList<string> serversList = Parser.AllServersList(listUrlData);
 
