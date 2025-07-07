@@ -31,36 +31,36 @@ namespace UpdateVpnList
         }
 
 
-        /// <summary>
-        /// Writes text data to .ovpn file if it contains 'proto udp' property. The name of that file corresponds to vpn server (written inside)
-        /// </summary>
-        /// <param name="data">.ovpn data</param>
-        /// <param name="errorMessage">recieves exception message</param>
-        /// <returns>The name of a file if success or empty string</returns>
-        public static string WriteFileIfUDP(string data, out string errorMessage)
-        {
-            if (!HasUdpProtocol(data))
-            {
-                errorMessage = "Не является протоколом UDP";
-                return string.Empty;
-            }
+        ///// <summary>
+        ///// Writes text data to .ovpn file if it contains 'proto udp' property. The name of that file corresponds to vpn server (written inside)
+        ///// </summary>
+        ///// <param name="data">.ovpn data</param>
+        ///// <param name="errorMessage">recieves exception message</param>
+        ///// <returns>The name of a file if success or empty string</returns>
+        //public static string WriteFileIfUDP(string data, out string errorMessage)
+        //{
+        //    if (!IsUdpProtocol(data))
+        //    {
+        //        errorMessage = "Не является протоколом UDP";
+        //        return string.Empty;
+        //    }
 
-            var serverName = ParseServerName(data);
-            var fileName = $"{serverName}.{fileExtention}";
+        //    var serverName = ParseServerName(data);
+        //    var fileName = $"{serverName}.{fileExtention}";
 
-            try
-            {
-                using StreamWriter writer = new(fileName, false, Encoding.UTF8);
-                writer.Write(data);
-                errorMessage = string.Empty;
-                return fileName;
-            }
-            catch (Exception ex)
-            {
-                errorMessage = ex.Message;
-                return string.Empty;
-            }
-        }
+        //    try
+        //    {
+        //        using StreamWriter writer = new(fileName, true, Encoding.UTF8);
+        //        writer.Write(data);
+        //        errorMessage = string.Empty;
+        //        return fileName;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        errorMessage = ex.Message;
+        //        return string.Empty;
+        //    }
+        //}
 
         private static string ParseServerName(string data)
         {
@@ -88,9 +88,6 @@ namespace UpdateVpnList
             return data[startIndex..endIndex].Replace('.', '_').Replace(' ', '_').Trim('\r');  
         }
 
-        private static bool HasUdpProtocol(string data) {            
-             if (data.StartsWith("proto udp")) return true;
-             return data.Contains("\nproto udp");
-        }
+
     }
 }

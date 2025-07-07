@@ -4,42 +4,45 @@ namespace UpdateVpnList
 {
     internal class Program
     {
-        private static readonly string listUrl = "https://vpnobratno.info/russia.html";
-
         static void Main(string[] _)
         {
-            Log($"Подключение к {listUrl}");
+            Settings settings = new();
+
+            Log($"Url: {settings.Url}");
+            Log($"UDP: {settings.Udp}");
+            Log($"TCP: {settings.Tcp}");
+            Log($"SSTP: {settings.Sstp}");
+            Log($"Выполняется подключение к URL...");
+
             Web web = new();
 
-            string listUrlData = web.LoadUrlAsString(listUrl, out string notification);
-            if (listUrlData.Length == 0) {
-                Log($"Не удалось загрузить страницу {listUrl}. Текст ошибки:\n{notification}");
+            string listUrlData = web.LoadUrlAsString(settings.Url, out string notification);
+            if (listUrlData.Length == 0)
+            {
+                Log($"Не удалось загрузить страницу {settings.Url}. Текст ошибки:\n{notification}");
                 return;
             }
 
             Log($"Прочитано {listUrlData.Length} байт");
 
             IReadOnlyList<string> serversList = Parser.AllServersList(listUrlData);
+            Log($"Обнаружено {serversList.Count} серверов");
 
             serversList.AsParallel<string>().ForAll(server =>
             {
-                var data = web.LoadUrlAsString(server, out notification);
+                var data = web.LoadUrlAsString(server, out string localNotification);
 
-                if (data.Length == 0)
+                if (Parser.IsUdpProtocol(data) && settings.Udp ||
+                    Parser.IsTcpProtocol(data) && settings.Tcp ||
+                    Parser.IsSstpProtocol(data) && settings.Sstp)
                 {
-                    Log($"Ошибка доступа к {server}\n{notification}");
+                    string fileName = FileSaver.WriteFile(data, out var errorMessage);
+
+                    if (fileName == string.Empty) Log($"{server} -> Ошибка: {errorMessage}");
+                    else Log($"{server} -> Ok: {fileName}");
                 }
-                else
-                {
-                    string fileName = FileSaver.WriteFileIfUDP(data, out var errorMessage);
-                    if (fileName == string.Empty)
-                    {
-                        Log($"{server} -> Ошибка: {errorMessage}");
-                    }
-                    else
-                    {
-                        Log($"{server} -> Ok: {fileName}");
-                    }
+                else {
+                    Log($"{server} -> Протокол не соответствует настройкам");
                 }
             });
 
@@ -47,21 +50,23 @@ namespace UpdateVpnList
             FinalCountDown(10);
         }
 
-        static void FinalCountDown(int seconds = 5) {
+        static void FinalCountDown(int seconds = 5)
+        {
             string measure = (seconds % 10) switch
-                            {
-                                1 => "секунду",
-                                2 or 3 or 4 => "секунды",
-                                _ => "секунд",
-                            };
+            {
+                1 => "секунду",
+                2 or 3 or 4 => "секунды",
+                _ => "секунд",
+            };
 
             Console.Write($"Окно автоматически закроется через {seconds} {measure}");
-            while (seconds > 0) { 
+            while (seconds > 0)
+            {
                 Console.Write('.');
                 Task.Delay(999).Wait();
                 seconds--;
             }
-            Console.WriteLine();        
+            Console.WriteLine();
         }
     }
 }
