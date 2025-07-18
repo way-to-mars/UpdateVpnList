@@ -1,4 +1,5 @@
-﻿using static UpdateVpnList.Logger;
+﻿using System.Net.Http.Headers;
+using static UpdateVpnList.Logger;
 
 namespace UpdateVpnList
 {
@@ -28,25 +29,45 @@ namespace UpdateVpnList
             IReadOnlyList<string> serversList = Parser.AllServersList(listUrlData);
             Log($"Обнаружено {serversList.Count} серверов");
 
-            serversList.AsParallel<string>().ForAll(server =>
+            int updated = 0;
+            int created = 0;
+
+            serversList
+                .AsParallel()
+                .Select((s, i) => new { Name = WithPadding(i + 1), Url = s })
+                .ForAll(it =>
             {
-                var data = web.LoadUrlAsString(server, out string localNotification);
+                var data = web.LoadUrlAsString(it.Url, out string localNotification);
 
                 if (Parser.IsUdpProtocol(data) && settings.Udp ||
                     Parser.IsTcpProtocol(data) && settings.Tcp ||
                     Parser.IsSstpProtocol(data) && settings.Sstp)
                 {
-                    string fileName = FileSaver.WriteFile(data, out var errorMessage);
+                    var saveResult = FileSaver.WriteFile(data, out var errorMessage);
 
-                    if (fileName == string.Empty) Log($"{server} -> Ошибка: {errorMessage}");
-                    else Log($"{server} -> Ok: {fileName}");
+                    switch (saveResult.State)
+                    {
+                        case FileSaver.ResultType.FAIL:
+                            Log($"{it.Name} -> Failed: {errorMessage}");
+                            break;
+                        case FileSaver.ResultType.NEW:
+                            Log($"{it.Name} -> Новый: {saveResult.FileName}");
+                            Interlocked.Increment(ref created);
+                            break;
+                        case FileSaver.ResultType.UPDATE:
+                            Log($"{it.Name} -> Обновлен: {saveResult.FileName}");
+                            Interlocked.Increment(ref updated);
+                            break;
+                    }
+
                 }
                 else {
-                    Log($"{server} -> Протокол не соответствует настройкам");
+                    Log($"{it.Name} -> Пропущен: {ProtoType(data)}");
                 }
             });
 
             web.Dispose();
+            Log($"Итого создано {created}, обновлено {updated}");
             FinalCountDown(10);
         }
 
@@ -67,6 +88,19 @@ namespace UpdateVpnList
                 seconds--;
             }
             Console.WriteLine();
+        }
+
+        static string ProtoType(string data)
+        {
+            if (Parser.IsUdpProtocol(data)) return "UDP";
+            if (Parser.IsTcpProtocol(data)) return "TCP";
+            if (Parser.IsSstpProtocol(data)) return "SSTP";
+            return "Unknown";
+        }
+
+        static string WithPadding(int number)
+        {
+            return number.ToString().PadLeft(3, '.');
         }
     }
 }
