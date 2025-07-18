@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Headers;
+using System.Text;
 using static UpdateVpnList.Logger;
 
 namespace UpdateVpnList
@@ -34,7 +35,7 @@ namespace UpdateVpnList
 
             serversList
                 .AsParallel()
-                .Select((s, i) => new { Name = WithPadding(i + 1), Url = s })
+                .Select((s, i) => new { Index = i, Url = s })
                 .ForAll(it =>
             {
                 var data = web.LoadUrlAsString(it.Url, out string localNotification);
@@ -48,27 +49,27 @@ namespace UpdateVpnList
                     switch (saveResult.State)
                     {
                         case FileSaver.ResultType.FAIL:
-                            Log($"{it.Name} -> Failed: {errorMessage}");
+                            Log($"{StateString(it.Index, serversList.Count, 'F')} -> Failed: {errorMessage}");
                             break;
                         case FileSaver.ResultType.NEW:
-                            Log($"{it.Name} -> Новый: {saveResult.FileName}");
+                            Log($"{StateString(it.Index, serversList.Count, 'N')} -> Новый: {saveResult.FileName}");
                             Interlocked.Increment(ref created);
                             break;
                         case FileSaver.ResultType.UPDATE:
-                            Log($"{it.Name} -> Обновлен: {saveResult.FileName}");
+                            Log($"{StateString(it.Index, serversList.Count, 'U')} -> Обновлен: {saveResult.FileName}");
                             Interlocked.Increment(ref updated);
                             break;
                     }
 
                 }
                 else {
-                    Log($"{it.Name} -> Пропущен: {ProtoType(data)}");
+                    Log($"{StateString(it.Index, serversList.Count, 'S')} -> Пропущен: {ProtoType(data)}");
                 }
             });
 
             web.Dispose();
             Log($"Итого создано {created}, обновлено {updated}");
-            FinalCountDown(10);
+            FinalCountDown(15);
         }
 
         static void FinalCountDown(int seconds = 5)
@@ -98,9 +99,16 @@ namespace UpdateVpnList
             return "Unknown";
         }
 
-        static string WithPadding(int number)
+        static string StateString(int position, int size, char state)
         {
-            return number.ToString().PadLeft(3, '.');
+            var sb = new StringBuilder();
+
+            sb.Append('[');
+            sb.Append('.', size);
+            sb.Append("]");
+            sb[position + 1] = state;
+
+            return sb.ToString();
         }
     }
 }
