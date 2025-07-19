@@ -10,11 +10,12 @@ namespace UpdateVpnList
         {
             Settings settings = new();
 
-            Log($"Url: {settings.Url}");
-            Log($"UDP: {settings.Udp}");
-            Log($"TCP: {settings.Tcp}");
-            Log($"SSTP: {settings.Sstp}");
-            Log($"Выполняется подключение к URL...");
+            Log($"Используемые настройки:\n" +
+                $"Url: {settings.Url}\n" +
+                $"UDP: {settings.Udp}\n" +
+                $"TCP: {settings.Tcp}\n" +
+                $"SSTP: {settings.Sstp}");
+            Log($"\nВыполняется подключение...");
 
             Web web = new();
 
@@ -28,7 +29,7 @@ namespace UpdateVpnList
             Log($"Прочитано {listUrlData.Length} байт");
 
             IReadOnlyList<string> serversList = Parser.AllServersList(listUrlData);
-            Log($"Обнаружено {serversList.Count} серверов");
+            Log($"Обнаружено {serversList.Count} доступных серверов");
 
             int updated = 0;
             int created = 0;
@@ -68,7 +69,7 @@ namespace UpdateVpnList
             });
 
             web.Dispose();
-            Log($"Итого создано {created}, обновлено {updated}");
+            Log($"Итого создано {created}, обновлено {updated}\n");
             FinalCountDown(15);
         }
 
